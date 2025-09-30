@@ -4,6 +4,7 @@ import { initUserModel } from '../models/User';
 import { initSessionModel } from '../models/Session';
 import { initCategoryModel } from '../models/Category';
 import { initArticleModel } from '../models/Article';
+import { initLikeArticleModel } from '../models/LikeArticle';
 import { setupAssociations } from '../models/associations';
 
 // Configuration pour les tests (mémoire) vs production (fichier)
@@ -22,6 +23,7 @@ export async function initDatabase(): Promise<void> {
     initSessionModel(sequelize);
     initCategoryModel(sequelize);
     initArticleModel(sequelize);
+    initLikeArticleModel(sequelize);
     
     // Configurer les associations après l'initialisation des modèles
     setupAssociations(sequelize);
