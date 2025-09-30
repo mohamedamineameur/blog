@@ -2,6 +2,7 @@ import { Sequelize } from 'sequelize';
 import { env } from '../config/env';
 import { initUserModel } from '../models/User';
 import { initSessionModel } from '../models/Session';
+import { initCategoryModel } from '../models/Category';
 
 // Configuration pour les tests (mémoire) vs production (fichier)
 const isTest = env.NODE_ENV === 'test';
@@ -17,6 +18,7 @@ export async function initDatabase(): Promise<void> {
     await sequelize.authenticate();
     initUserModel(sequelize);
     initSessionModel(sequelize);
+    initCategoryModel(sequelize);
     await sequelize.sync();
     console.log("Database connected and synchronized");
   } catch (error) {

@@ -6,6 +6,7 @@ import bodyParser from 'body-parser';
 import cookieParser from 'cookie-parser';
 import userRoutes from './routes/user.routes';
 import authRoutes from './routes/auth.routes';
+import categoryRoutes from './routes/category.routes';
 import { errorHandler } from './middleware/validation';
 
 const app = express();
@@ -32,6 +33,7 @@ app.get('/', (req: Request, res: Response) => {
 
 app.use('/api/auth', authRoutes);
 app.use('/api/users', userRoutes);
+app.use('/api/categories', categoryRoutes);
 
 // Middleware de gestion d'erreurs (doit être en dernier)
 app.use(errorHandler);
