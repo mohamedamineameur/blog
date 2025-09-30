@@ -1,0 +1,7 @@
+rules:
+  - "N'utilise jamais le type `any` en TypeScript."
+  - "Si le type exact n’est pas connu, utilise `unknown` ou définis une interface explicite."
+  - "Toujours préférer des types explicites et précis."
+  - "Utilise des interfaces ou des types plutôt que des objets inline."
+  - "Respecte les conventions de code du projet."
+  - "Ne laisse pas les variable déclarées non utilisées"
