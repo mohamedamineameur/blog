@@ -160,3 +160,33 @@ export const meScope = (req: AuthenticatedRequest, res: Response, next: NextFunc
     });
   }
 };
+
+// Middleware pour vérifier que l'utilisateur est l'auteur de l'article ou un admin
+export const articleAuthorOrAdminScope = (req: AuthenticatedRequest, res: Response, next: NextFunction): void => {
+  try {
+    // Vérifier que l'utilisateur est authentifié
+    if (!req.user) {
+      res.status(401).json({
+        success: false,
+        message: 'Non authentifié'
+      });
+      return;
+    }
+
+    // Si l'utilisateur est admin, il peut accéder à tout
+    if (req.user.isAdmin) {
+      next();
+      return;
+    }
+
+    // Pour les articles, nous devons vérifier que l'utilisateur est l'auteur
+    // Cette vérification sera faite dans le contrôleur car nous avons besoin de récupérer l'article
+    next();
+  } catch (error) {
+    console.error('Erreur dans le middleware articleAuthorOrAdminScope:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur interne du serveur'
+    });
+  }
+};

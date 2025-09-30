@@ -3,6 +3,8 @@ import { env } from '../config/env';
 import { initUserModel } from '../models/User';
 import { initSessionModel } from '../models/Session';
 import { initCategoryModel } from '../models/Category';
+import { initArticleModel } from '../models/Article';
+import { setupAssociations } from '../models/associations';
 
 // Configuration pour les tests (mémoire) vs production (fichier)
 const isTest = env.NODE_ENV === 'test';
@@ -19,10 +21,15 @@ export async function initDatabase(): Promise<void> {
     initUserModel(sequelize);
     initSessionModel(sequelize);
     initCategoryModel(sequelize);
+    initArticleModel(sequelize);
+    
+    // Configurer les associations après l'initialisation des modèles
+    setupAssociations(sequelize);
+    
     await sequelize.sync();
     console.log("Database connected and synchronized");
   } catch (error) {
     console.error("Database initialization failed", error);
-    process.exit(1);
+    throw error;
   }
 }
