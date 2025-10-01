@@ -1,4 +1,4 @@
-// @ts-nocheck
+// Configuration TypeScript pour les tests
 import { initDatabase } from '../db/sequelize';
 
 // Configuration pour les tests

@@ -2,7 +2,6 @@ import { Request, Response } from 'express';
 import { LikeArticle } from '../models/LikeArticle';
 import { Article } from '../models/Article';
 import { User } from '../models/User';
-import { Op } from 'sequelize';
 import { AuthenticatedRequest } from '../middleware/auth';
 
 // Interfaces pour les requêtes
@@ -108,7 +107,10 @@ export interface IResLikeStats {
 }
 
 // Créer un like pour un article
-export const createLikeArticle = async (req: AuthenticatedRequest<IReqLikeArticleParams, IResCreateLikeArticle, IReqCreateLikeArticle>, res: Response<IResCreateLikeArticle>): Promise<void> => {
+export const createLikeArticle = async (
+  req: AuthenticatedRequest, 
+  res: Response<IResCreateLikeArticle>
+): Promise<void> => {
   try {
     const { articleId, type } = req.body;
     const userId = req.user!.id;
@@ -210,7 +212,11 @@ export const getLikeArticles = async (req: Request<object, IResGetLikeArticles, 
     } = req.query;
 
     // Construire les conditions de recherche
-    const whereClause: any = {};
+    const whereClause: Partial<{
+      type: string;
+      articleId: string | number;
+      userId: string | number;
+    }> = {};
     
     if (type) {
       whereClause.type = type;
@@ -322,11 +328,14 @@ export const getLikeArticleById = async (req: Request<IReqLikeArticleParams, IRe
 };
 
 // Mettre à jour un like
-export const updateLikeArticle = async (req: AuthenticatedRequest<IReqLikeArticleParams, IResUpdateLikeArticle, IReqUpdateLikeArticle>, res: Response<IResUpdateLikeArticle>): Promise<void> => {
+export const updateLikeArticle = async (
+  req: AuthenticatedRequest, 
+  res: Response<IResUpdateLikeArticle>
+): Promise<void> => {
   try {
     const { id } = req.params;
     const { type } = req.body;
-    const userId = req.user!.id;
+    const userId = req.user && req.user.id;
     const isAdmin = req.user!.isAdmin;
 
     // Vérifier si le like existe
@@ -386,11 +395,14 @@ export const updateLikeArticle = async (req: AuthenticatedRequest<IReqLikeArticl
 };
 
 // Supprimer un like
-export const deleteLikeArticle = async (req: AuthenticatedRequest<IReqLikeArticleParams, IResDeleteLikeArticle>, res: Response<IResDeleteLikeArticle>): Promise<void> => {
+export const deleteLikeArticle = async (
+  req: AuthenticatedRequest, 
+  res: Response<IResDeleteLikeArticle>
+): Promise<void> => {
   try {
     const { id } = req.params;
-    const userId = req.user!.id;
-    const isAdmin = req.user!.isAdmin;
+    const userId = req.user?.id;
+    const isAdmin = req.user?.isAdmin;
 
     // Vérifier si le like existe
     const like = await LikeArticle.findByPk(id);
@@ -478,12 +490,15 @@ export const getArticleLikeStats = async (req: Request<IReqArticleParams, IResLi
     };
 
     // Remplir les compteurs
-    stats.forEach((stat: any) => {
-      const type = stat.type;
-      const count = parseInt(stat.dataValues.count);
-      counts[type as keyof typeof counts] = count;
-      counts.total += count;
+    stats.forEach((stat) => {
+      const type = stat.get('type') as keyof typeof counts;
+      const count = parseInt(stat.get('count') as string, 10);
+      if (type in counts) {
+        counts[type] = count;
+        counts.total += count;
+      }
     });
+   
 
     res.status(200).json({
       success: true,

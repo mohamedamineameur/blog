@@ -10,7 +10,7 @@ export interface CategoryAttributes {
 }
 
 // Interface pour les attributs optionnels lors de la création
-export interface CategoryCreationAttributes extends Optional<CategoryAttributes, 'id' | 'createdAt' | 'updatedAt'> {}
+export type CategoryCreationAttributes = Optional<CategoryAttributes, 'id' | 'createdAt' | 'updatedAt'>;
 
 // Classe du modèle Category
 export class Category extends Model<CategoryAttributes, CategoryCreationAttributes> implements CategoryAttributes {

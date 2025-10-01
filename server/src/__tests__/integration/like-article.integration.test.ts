@@ -5,7 +5,7 @@ import { Article } from '../../models/Article';
 import { Category } from '../../models/Category';
 import { User } from '../../models/User';
 import { Session } from '../../models/Session';
-import { sequelize } from '../../db/sequelize';
+// import { sequelize } from '../../db/sequelize'; // Unused import
 import { initDatabase } from '../../db/sequelize';
 import { 
   generateTestToken,
@@ -191,7 +191,10 @@ describe('LikeArticle Integration Tests', () => {
           firstname: `Test${i}`,
           lastname: `User${i}`,
           email: `test${i}@example.com`,
-          password: 'password123'
+          password: 'password123',
+          isAdmin: false,
+          isEmailVerified: true,
+          isBanned: false
         });
         const testToken = generateTestToken(testUser.id);
         const testTokenHash = await hashTestToken(testToken);
@@ -212,7 +215,7 @@ describe('LikeArticle Integration Tests', () => {
           ])
           .send({
             articleId: article.id,
-            type: likeTypes[i] as any
+            type: likeTypes[i] as 'like' | 'love' | 'care' | 'haha' | 'wow' | 'sad' | 'angry'
           })
           .expect(201);
       }
@@ -242,7 +245,7 @@ describe('LikeArticle Integration Tests', () => {
         .expect(200);
 
       expect(sortedResponse.body.success).toBe(true);
-      const types = sortedResponse.body.data.data.map((like: any) => like.type);
+      const types = sortedResponse.body.data.data.map((like: { type: string }) => like.type);
       expect(types).toEqual(['angry', 'care', 'haha', 'like', 'love', 'sad', 'wow']);
     }, 30000);
 
@@ -261,7 +264,10 @@ describe('LikeArticle Integration Tests', () => {
             firstname: `Test${type}${i}`,
             lastname: `User${type}${i}`,
             email: `test${type}${i}@example.com`,
-            password: 'password123'
+            password: 'password123',
+            isAdmin: false,
+            isEmailVerified: true,
+            isBanned: false
           });
           const testToken = generateTestToken(testUser.id);
           const testTokenHash = await hashTestToken(testToken);
@@ -282,7 +288,7 @@ describe('LikeArticle Integration Tests', () => {
             ])
             .send({
               articleId: article.id,
-              type: type as any
+              type: type as 'like' | 'love' | 'care' | 'haha' | 'wow' | 'sad' | 'angry'
             })
             .expect(201);
         }

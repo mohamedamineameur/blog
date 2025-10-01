@@ -1,11 +1,11 @@
 import request from 'supertest';
 import app from '../../app';
-import { LikeArticle } from '../../models/LikeArticle';
+import { CommentArticle } from '../../models/comment-article';
 import { Article } from '../../models/Article';
 import { Category } from '../../models/Category';
 import { User } from '../../models/User';
 import { Session } from '../../models/Session';
-import { sequelize } from '../../db/sequelize';
+// import { sequelize } from '../../db/sequelize'; // Unused import
 import { initDatabase } from '../../db/sequelize';
 import { 
   generateTestToken,
@@ -19,8 +19,8 @@ import {
 } from '../fixtures/user.fixtures';
 
 // Fonction de nettoyage
-const cleanupLikeArticles = async (): Promise<void> => {
-  await LikeArticle.destroy({ where: {}, force: true });
+const cleanupCommentArticles = async (): Promise<void> => {
+  await CommentArticle.destroy({ where: {}, force: true });
 };
 
 const cleanupArticles = async (): Promise<void> => {
@@ -31,7 +31,7 @@ const cleanupCategories = async (): Promise<void> => {
   await Category.destroy({ where: {}, force: true });
 };
 
-describe('LikeArticle CRUD Operations', () => {
+describe('CommentArticle CRUD Operations', () => {
   let adminUser: User;
   let regularUser: User;
   let adminToken: string;
@@ -46,7 +46,7 @@ describe('LikeArticle CRUD Operations', () => {
   });
 
   beforeEach(async () => {
-    await cleanupLikeArticles();
+    await cleanupCommentArticles();
     await cleanupArticles();
     await cleanupCategories();
     await cleanupUsers();
@@ -95,29 +95,29 @@ describe('LikeArticle CRUD Operations', () => {
   });
 
   afterAll(async () => {
-    await cleanupLikeArticles();
+    await cleanupCommentArticles();
     await cleanupArticles();
     await cleanupCategories();
     await cleanupUsers();
     await cleanupAuth();
   });
 
-  describe('GET /api/like-articles', () => {
-    it('should get all likes without authentication', async () => {
-      // Créer quelques likes de test
-      await LikeArticle.create({
+  describe('GET /api/comment-articles', () => {
+    it('should get all comments without authentication', async () => {
+      // Créer quelques commentaires de test
+      await CommentArticle.create({
         userId: regularUser.id,
         articleId: article.id,
-        type: 'like'
+        content: 'First comment'
       });
-      await LikeArticle.create({
+      await CommentArticle.create({
         userId: adminUser.id,
         articleId: article.id,
-        type: 'love'
+        content: 'Second comment'
       });
 
       const response = await request(app)
-        .get('/api/like-articles')
+        .get('/api/comment-articles')
         .expect(200);
 
       expect(response.body.success).toBe(true);
@@ -125,8 +125,8 @@ describe('LikeArticle CRUD Operations', () => {
       expect(response.body.data.pagination.total).toBe(2);
     });
 
-    it('should get likes with pagination', async () => {
-      // Créer plusieurs utilisateurs et likes
+    it('should get comments with pagination', async () => {
+      // Créer plusieurs commentaires
       for (let i = 1; i <= 15; i++) {
         const testUser = await createUserInDb({
           firstname: `Test${i}`,
@@ -134,15 +134,15 @@ describe('LikeArticle CRUD Operations', () => {
           email: `test${i}@example.com`,
           password: 'password123'
         });
-        await LikeArticle.create({
+        await CommentArticle.create({
           userId: testUser.id,
           articleId: article.id,
-          type: 'like'
+          content: `Comment ${i}`
         });
       }
 
       const response = await request(app)
-        .get('/api/like-articles?page=1&limit=5')
+        .get('/api/comment-articles?page=1&limit=5')
         .expect(200);
 
       expect(response.body.success).toBe(true);
@@ -153,28 +153,7 @@ describe('LikeArticle CRUD Operations', () => {
       expect(response.body.data.pagination.totalPages).toBe(3);
     }, 30000);
 
-    it('should filter likes by type', async () => {
-      await LikeArticle.create({
-        userId: regularUser.id,
-        articleId: article.id,
-        type: 'like'
-      });
-      await LikeArticle.create({
-        userId: adminUser.id,
-        articleId: article.id,
-        type: 'love'
-      });
-
-      const response = await request(app)
-        .get('/api/like-articles?type=like')
-        .expect(200);
-
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.data).toHaveLength(1);
-      expect(response.body.data.data[0].type).toBe('like');
-    });
-
-    it('should filter likes by article', async () => {
+    it('should filter comments by article', async () => {
       const article2 = await Article.create({
         userId: regularUser.id,
         categoryId: category.id,
@@ -183,19 +162,19 @@ describe('LikeArticle CRUD Operations', () => {
         status: 'published'
       });
 
-      await LikeArticle.create({
+      await CommentArticle.create({
         userId: regularUser.id,
         articleId: article.id,
-        type: 'like'
+        content: 'Comment on article 1'
       });
-      await LikeArticle.create({
+      await CommentArticle.create({
         userId: adminUser.id,
         articleId: article2.id,
-        type: 'love'
+        content: 'Comment on article 2'
       });
 
       const response = await request(app)
-        .get(`/api/like-articles?articleId=${article.id}`)
+        .get(`/api/comment-articles?articleId=${article.id}`)
         .expect(200);
 
       expect(response.body.success).toBe(true);
@@ -203,20 +182,20 @@ describe('LikeArticle CRUD Operations', () => {
       expect(response.body.data.data[0].articleId).toBe(article.id);
     });
 
-    it('should filter likes by user', async () => {
-      await LikeArticle.create({
+    it('should filter comments by user', async () => {
+      await CommentArticle.create({
         userId: regularUser.id,
         articleId: article.id,
-        type: 'like'
+        content: 'User comment'
       });
-      await LikeArticle.create({
+      await CommentArticle.create({
         userId: adminUser.id,
         articleId: article.id,
-        type: 'love'
+        content: 'Admin comment'
       });
 
       const response = await request(app)
-        .get(`/api/like-articles?userId=${regularUser.id}`)
+        .get(`/api/comment-articles?userId=${regularUser.id}`)
         .expect(200);
 
       expect(response.body.success).toBe(true);
@@ -224,48 +203,71 @@ describe('LikeArticle CRUD Operations', () => {
       expect(response.body.data.data[0].userId).toBe(regularUser.id);
     });
 
-    it('should sort likes', async () => {
-      await LikeArticle.create({
+    it('should filter comments by approval status', async () => {
+      await CommentArticle.create({
         userId: regularUser.id,
         articleId: article.id,
-        type: 'angry'
+        content: 'Approved comment',
+        isApproved: true
       });
-      await LikeArticle.create({
+      await CommentArticle.create({
         userId: adminUser.id,
         articleId: article.id,
-        type: 'like'
+        content: 'Pending comment',
+        isApproved: false
       });
 
       const response = await request(app)
-        .get('/api/like-articles?sortBy=type&sortOrder=ASC')
+        .get('/api/comment-articles?isApproved=false')
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.data[0].type).toBe('angry');
-      expect(response.body.data.data[1].type).toBe('like');
+      expect(response.body.data.data).toHaveLength(1);
+      expect(response.body.data.data[0].isApproved).toBe(false);
+    });
+
+    it('should sort comments', async () => {
+      await CommentArticle.create({
+        userId: regularUser.id,
+        articleId: article.id,
+        content: 'First comment'
+      });
+      await CommentArticle.create({
+        userId: adminUser.id,
+        articleId: article.id,
+        content: 'Second comment'
+      });
+
+      const response = await request(app)
+        .get('/api/comment-articles?sortBy=content&sortOrder=ASC')
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.data.data[0].content).toBe('First comment');
+      expect(response.body.data.data[1].content).toBe('Second comment');
     });
   });
 
-  describe('GET /api/like-articles/:id', () => {
-    it('should get a like by ID without authentication', async () => {
-      const like = await LikeArticle.create({
+  describe('GET /api/comment-articles/:id', () => {
+    it('should get a comment by ID without authentication', async () => {
+      const comment = await CommentArticle.create({
         userId: regularUser.id,
         articleId: article.id,
-        type: 'like'
+        content: 'Test comment'
       });
 
       const response = await request(app)
-        .get(`/api/like-articles/${like.id}`)
+        .get(`/api/comment-articles/${comment.id}`)
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.id).toBe(like.id);
-      expect(response.body.data.type).toBe('like');
+      expect(response.body.data.id).toBe(comment.id);
+      expect(response.body.data.content).toBe('Test comment');
     });
 
-    it('should return 404 for non-existent like', async () => {
+    it('should return 404 for non-existent comment', async () => {
       const response = await request(app)
-        .get('/api/like-articles/00000000-0000-0000-0000-000000000000')
+        .get('/api/comment-articles/00000000-0000-0000-0000-000000000000')
         .expect(404);
 
       expect(response.body.success).toBe(false);
@@ -274,151 +276,153 @@ describe('LikeArticle CRUD Operations', () => {
 
     it('should return 400 for invalid UUID', async () => {
       const response = await request(app)
-        .get('/api/like-articles/invalid-id')
+        .get('/api/comment-articles/invalid-id')
         .expect(400);
 
       expect(response.body.success).toBe(false);
     });
   });
 
-  describe('GET /api/like-articles/stats/:articleId', () => {
-    it('should get like statistics for an article', async () => {
-      // Créer des utilisateurs supplémentaires pour les likes
-      const user1 = await createUserInDb({
-        firstname: 'User1',
-        lastname: 'Test',
-        email: 'user1@example.com',
-        password: 'password123'
-      });
-      const user2 = await createUserInDb({
-        firstname: 'User2',
-        lastname: 'Test',
-        email: 'user2@example.com',
-        password: 'password123'
-      });
-
-      // Créer des likes de différents types
-      await LikeArticle.create({
-        userId: regularUser.id,
+  describe('POST /api/comment-articles', () => {
+    it('should create a comment as authenticated user', async () => {
+      const commentData = {
         articleId: article.id,
-        type: 'like'
-      });
-      await LikeArticle.create({
-        userId: user1.id,
-        articleId: article.id,
-        type: 'like'
-      });
-      await LikeArticle.create({
-        userId: user2.id,
-        articleId: article.id,
-        type: 'love'
-      });
-
-      const response = await request(app)
-        .get(`/api/like-articles/stats/${article.id}`)
-        .expect(200);
-
-      expect(response.body.success).toBe(true);
-      expect(response.body.data.articleId).toBe(article.id);
-      expect(response.body.data.stats.like).toBe(2);
-      expect(response.body.data.stats.love).toBe(1);
-      expect(response.body.data.stats.total).toBe(3);
-    });
-
-    it('should return empty stats for non-existent article', async () => {
-      const response = await request(app)
-        .get('/api/like-articles/stats/00000000-0000-0000-0000-000000000000')
-        .expect(404);
-
-      expect(response.body.success).toBe(false);
-    });
-  });
-
-  describe('POST /api/like-articles', () => {
-    it('should create a like as authenticated user', async () => {
-      const likeData = {
-        articleId: article.id,
-        type: 'like'
+        content: 'This is a test comment'
       };
 
       const response = await request(app)
-        .post('/api/like-articles')
+        .post('/api/comment-articles')
         .set('Cookie', [
           `sessionId=${userSession.id}`,
           `token=${userToken}`
         ])
-        .send(likeData)
+        .send(commentData)
         .expect(201);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.message).toBe('Like créé avec succès');
-      expect(response.body.data.type).toBe('like');
+      expect(response.body.message).toBe('Commentaire créé avec succès');
+      expect(response.body.data.content).toBe('This is a test comment');
       expect(response.body.data.userId).toBe(regularUser.id);
     });
 
-    it('should update existing like if user already liked the article', async () => {
-      // Créer un like initial
-      await LikeArticle.create({
-        userId: regularUser.id,
+    it('should create a reply to a comment', async () => {
+      // Créer un commentaire parent
+      const parentComment = await CommentArticle.create({
+        userId: adminUser.id,
         articleId: article.id,
-        type: 'like'
+        content: 'Parent comment'
       });
 
-      const likeData = {
+      const replyData = {
         articleId: article.id,
-        type: 'love'
+        content: 'This is a reply',
+        parentId: parentComment.id
       };
 
       const response = await request(app)
-        .post('/api/like-articles')
+        .post('/api/comment-articles')
         .set('Cookie', [
           `sessionId=${userSession.id}`,
           `token=${userToken}`
         ])
-        .send(likeData)
-        .expect(200);
+        .send(replyData)
+        .expect(201);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.message).toBe('Like mis à jour avec succès');
-      expect(response.body.data.type).toBe('love');
+      expect(response.body.data.content).toBe('This is a reply');
+      expect(response.body.data.parentId).toBe(parentComment.id);
     });
 
     it('should deny access without authentication', async () => {
-      const likeData = {
+      const commentData = {
         articleId: article.id,
-        type: 'like'
+        content: 'Test comment'
       };
 
       const response = await request(app)
-        .post('/api/like-articles')
-        .send(likeData)
+        .post('/api/comment-articles')
+        .send(commentData)
         .expect(401);
 
       expect(response.body.success).toBe(false);
     });
 
     it('should return 404 for non-existent article', async () => {
-      const likeData = {
+      const commentData = {
         articleId: '00000000-0000-0000-0000-000000000000',
-        type: 'like'
+        content: 'Test comment'
       };
 
       const response = await request(app)
-        .post('/api/like-articles')
+        .post('/api/comment-articles')
         .set('Cookie', [
           `sessionId=${userSession.id}`,
           `token=${userToken}`
         ])
-        .send(likeData)
+        .send(commentData)
         .expect(404);
 
       expect(response.body.success).toBe(false);
       expect(response.body.message).toBe('Article non trouvé');
     });
 
+    it('should return 404 for non-existent parent comment', async () => {
+      const commentData = {
+        articleId: article.id,
+        content: 'Reply to non-existent comment',
+        parentId: '00000000-0000-0000-0000-000000000000'
+      };
+
+      const response = await request(app)
+        .post('/api/comment-articles')
+        .set('Cookie', [
+          `sessionId=${userSession.id}`,
+          `token=${userToken}`
+        ])
+        .send(commentData)
+        .expect(404);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toBe('Commentaire parent non trouvé');
+    });
+
+    it('should return 400 for parent comment from different article', async () => {
+      const article2 = await Article.create({
+        userId: regularUser.id,
+        categoryId: category.id,
+        title: 'Article 2',
+        content: 'Content 2',
+        status: 'published'
+      });
+
+      const parentComment = await CommentArticle.create({
+        userId: adminUser.id,
+        articleId: article2.id,
+        content: 'Parent comment'
+      });
+
+      const commentData = {
+        articleId: article.id,
+        content: 'Reply to comment from different article',
+        parentId: parentComment.id
+      };
+
+      const response = await request(app)
+        .post('/api/comment-articles')
+        .set('Cookie', [
+          `sessionId=${userSession.id}`,
+          `token=${userToken}`
+        ])
+        .send(commentData)
+        .expect(400);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toBe('Le commentaire parent doit appartenir au même article');
+    });
+
     it('should validate required fields', async () => {
       const response = await request(app)
-        .post('/api/like-articles')
+        .post('/api/comment-articles')
         .set('Cookie', [
           `sessionId=${userSession.id}`,
           `token=${userToken}`
@@ -429,43 +433,43 @@ describe('LikeArticle CRUD Operations', () => {
       expect(response.body.success).toBe(false);
     });
 
-    it('should validate type values', async () => {
-      const likeData = {
+    it('should validate content length', async () => {
+      const commentData = {
         articleId: article.id,
-        type: 'invalid'
+        content: 'a'.repeat(2001) // Too long
       };
 
       const response = await request(app)
-        .post('/api/like-articles')
+        .post('/api/comment-articles')
         .set('Cookie', [
           `sessionId=${userSession.id}`,
           `token=${userToken}`
         ])
-        .send(likeData)
+        .send(commentData)
         .expect(400);
 
       expect(response.body.success).toBe(false);
     });
   });
 
-  describe('PUT /api/like-articles/:id', () => {
-    let like: LikeArticle;
+  describe('PUT /api/comment-articles/:id', () => {
+    let comment: CommentArticle;
 
     beforeEach(async () => {
-      like = await LikeArticle.create({
+      comment = await CommentArticle.create({
         userId: regularUser.id,
         articleId: article.id,
-        type: 'like'
+        content: 'Original comment'
       });
     });
 
-    it('should update a like as the author', async () => {
+    it('should update a comment as the author', async () => {
       const updateData = {
-        type: 'love'
+        content: 'Updated comment'
       };
 
       const response = await request(app)
-        .put(`/api/like-articles/${like.id}`)
+        .put(`/api/comment-articles/${comment.id}`)
         .set('Cookie', [
           `sessionId=${userSession.id}`,
           `token=${userToken}`
@@ -474,17 +478,17 @@ describe('LikeArticle CRUD Operations', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.message).toBe('Like mis à jour avec succès');
-      expect(response.body.data.type).toBe('love');
+      expect(response.body.message).toBe('Commentaire mis à jour avec succès');
+      expect(response.body.data.content).toBe('Updated comment');
     });
 
-    it('should update a like as admin', async () => {
+    it('should update a comment as admin', async () => {
       const updateData = {
-        type: 'angry'
+        content: 'Admin updated comment'
       };
 
       const response = await request(app)
-        .put(`/api/like-articles/${like.id}`)
+        .put(`/api/comment-articles/${comment.id}`)
         .set('Cookie', [
           `sessionId=${adminSession.id}`,
           `token=${adminToken}`
@@ -493,7 +497,7 @@ describe('LikeArticle CRUD Operations', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.data.type).toBe('angry');
+      expect(response.body.data.content).toBe('Admin updated comment');
     });
 
     it('should deny access to other users', async () => {
@@ -515,11 +519,11 @@ describe('LikeArticle CRUD Operations', () => {
       });
 
       const updateData = {
-        type: 'love'
+        content: 'Unauthorized update'
       };
 
       const response = await request(app)
-        .put(`/api/like-articles/${like.id}`)
+        .put(`/api/comment-articles/${comment.id}`)
         .set('Cookie', [
           `sessionId=${otherSession.id}`,
           `token=${otherToken}`
@@ -528,29 +532,29 @@ describe('LikeArticle CRUD Operations', () => {
         .expect(403);
 
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Vous ne pouvez modifier que vos propres likes');
+      expect(response.body.message).toBe('Vous ne pouvez modifier que vos propres commentaires');
     });
 
     it('should deny access without authentication', async () => {
       const updateData = {
-        type: 'love'
+        content: 'Unauthorized update'
       };
 
       const response = await request(app)
-        .put(`/api/like-articles/${like.id}`)
+        .put(`/api/comment-articles/${comment.id}`)
         .send(updateData)
         .expect(401);
 
       expect(response.body.success).toBe(false);
     });
 
-    it('should return 404 for non-existent like', async () => {
+    it('should return 404 for non-existent comment', async () => {
       const updateData = {
-        type: 'love'
+        content: 'Updated comment'
       };
 
       const response = await request(app)
-        .put('/api/like-articles/00000000-0000-0000-0000-000000000000')
+        .put('/api/comment-articles/00000000-0000-0000-0000-000000000000')
         .set('Cookie', [
           `sessionId=${userSession.id}`,
           `token=${userToken}`
@@ -559,24 +563,24 @@ describe('LikeArticle CRUD Operations', () => {
         .expect(404);
 
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Like non trouvé');
+      expect(response.body.message).toBe('Commentaire non trouvé');
     });
   });
 
-  describe('DELETE /api/like-articles/:id', () => {
-    let like: LikeArticle;
+  describe('DELETE /api/comment-articles/:id', () => {
+    let comment: CommentArticle;
 
     beforeEach(async () => {
-      like = await LikeArticle.create({
+      comment = await CommentArticle.create({
         userId: regularUser.id,
         articleId: article.id,
-        type: 'like'
+        content: 'Comment to delete'
       });
     });
 
-    it('should delete a like as the author', async () => {
+    it('should delete a comment as the author', async () => {
       const response = await request(app)
-        .delete(`/api/like-articles/${like.id}`)
+        .delete(`/api/comment-articles/${comment.id}`)
         .set('Cookie', [
           `sessionId=${userSession.id}`,
           `token=${userToken}`
@@ -584,16 +588,16 @@ describe('LikeArticle CRUD Operations', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.message).toBe('Like supprimé avec succès');
+      expect(response.body.message).toBe('Commentaire supprimé avec succès');
 
-      // Vérifier que le like a été supprimé
-      const deletedLike = await LikeArticle.findByPk(like.id);
-      expect(deletedLike).toBeNull();
+      // Vérifier que le commentaire a été supprimé
+      const deletedComment = await CommentArticle.findByPk(comment.id);
+      expect(deletedComment).toBeNull();
     });
 
-    it('should delete a like as admin', async () => {
+    it('should delete a comment as admin', async () => {
       const response = await request(app)
-        .delete(`/api/like-articles/${like.id}`)
+        .delete(`/api/comment-articles/${comment.id}`)
         .set('Cookie', [
           `sessionId=${adminSession.id}`,
           `token=${adminToken}`
@@ -601,7 +605,7 @@ describe('LikeArticle CRUD Operations', () => {
         .expect(200);
 
       expect(response.body.success).toBe(true);
-      expect(response.body.message).toBe('Like supprimé avec succès');
+      expect(response.body.message).toBe('Commentaire supprimé avec succès');
     });
 
     it('should deny access to other users', async () => {
@@ -623,7 +627,7 @@ describe('LikeArticle CRUD Operations', () => {
       });
 
       const response = await request(app)
-        .delete(`/api/like-articles/${like.id}`)
+        .delete(`/api/comment-articles/${comment.id}`)
         .set('Cookie', [
           `sessionId=${otherSession.id}`,
           `token=${otherToken}`
@@ -631,20 +635,20 @@ describe('LikeArticle CRUD Operations', () => {
         .expect(403);
 
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Vous ne pouvez supprimer que vos propres likes');
+      expect(response.body.message).toBe('Vous ne pouvez supprimer que vos propres commentaires');
     });
 
     it('should deny access without authentication', async () => {
       const response = await request(app)
-        .delete(`/api/like-articles/${like.id}`)
+        .delete(`/api/comment-articles/${comment.id}`)
         .expect(401);
 
       expect(response.body.success).toBe(false);
     });
 
-    it('should return 404 for non-existent like', async () => {
+    it('should return 404 for non-existent comment', async () => {
       const response = await request(app)
-        .delete('/api/like-articles/00000000-0000-0000-0000-000000000000')
+        .delete('/api/comment-articles/00000000-0000-0000-0000-000000000000')
         .set('Cookie', [
           `sessionId=${userSession.id}`,
           `token=${userToken}`
@@ -652,7 +656,88 @@ describe('LikeArticle CRUD Operations', () => {
         .expect(404);
 
       expect(response.body.success).toBe(false);
-      expect(response.body.message).toBe('Like non trouvé');
+      expect(response.body.message).toBe('Commentaire non trouvé');
+    });
+  });
+
+  describe('PATCH /api/comment-articles/:id/approve', () => {
+    let comment: CommentArticle;
+
+    beforeEach(async () => {
+      comment = await CommentArticle.create({
+        userId: regularUser.id,
+        articleId: article.id,
+        content: 'Comment to approve',
+        isApproved: false
+      });
+    });
+
+    it('should approve a comment as admin', async () => {
+      const approveData = {
+        isApproved: true
+      };
+
+      const response = await request(app)
+        .patch(`/api/comment-articles/${comment.id}/approve`)
+        .set('Cookie', [
+          `sessionId=${adminSession.id}`,
+          `token=${adminToken}`
+        ])
+        .send(approveData)
+        .expect(200);
+
+      expect(response.body.success).toBe(true);
+      expect(response.body.message).toBe('Commentaire approuvé avec succès');
+      expect(response.body.data.isApproved).toBe(true);
+    });
+
+    it('should deny access to non-admin users', async () => {
+      const approveData = {
+        isApproved: true
+      };
+
+      const response = await request(app)
+        .patch(`/api/comment-articles/${comment.id}/approve`)
+        .set('Cookie', [
+          `sessionId=${userSession.id}`,
+          `token=${userToken}`
+        ])
+        .send(approveData)
+        .expect(403);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toBe('Accès refusé : privilèges administrateur requis');
+    });
+
+    it('should deny access without authentication', async () => {
+      const approveData = {
+        isApproved: true
+      };
+
+      const response = await request(app)
+        .patch(`/api/comment-articles/${comment.id}/approve`)
+        .send(approveData)
+        .expect(401);
+
+      expect(response.body.success).toBe(false);
+    });
+
+    it('should return 404 for non-existent comment', async () => {
+      const approveData = {
+        isApproved: true
+      };
+
+      const response = await request(app)
+        .patch('/api/comment-articles/00000000-0000-0000-0000-000000000000/approve')
+        .set('Cookie', [
+          `sessionId=${adminSession.id}`,
+          `token=${adminToken}`
+        ])
+        .send(approveData)
+        .expect(404);
+
+      expect(response.body.success).toBe(false);
+      expect(response.body.message).toBe('Commentaire non trouvé');
     });
   });
 });

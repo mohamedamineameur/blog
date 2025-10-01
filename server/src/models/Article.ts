@@ -13,7 +13,7 @@ export interface ArticleAttributes {
 }
 
 // Interface pour les attributs optionnels lors de la création
-export interface ArticleCreationAttributes extends Optional<ArticleAttributes, 'id' | 'createdAt' | 'updatedAt'> {}
+export type ArticleCreationAttributes = Optional<ArticleAttributes, 'id' | 'createdAt' | 'updatedAt'>;
 
 // Classe du modèle Article
 export class Article extends Model<ArticleAttributes, ArticleCreationAttributes> implements ArticleAttributes {

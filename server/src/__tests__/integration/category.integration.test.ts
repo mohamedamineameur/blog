@@ -3,17 +3,14 @@ import app from '../../app';
 import { Category } from '../../models/Category';
 import { User } from '../../models/User';
 import { Session } from '../../models/Session';
-import { sequelize } from '../../db/sequelize';
 import { initDatabase } from '../../db/sequelize';
 import { 
   generateTestToken,
-  hashTestToken,
-  cleanupAuth
+  hashTestToken
 } from '../fixtures/auth.fixtures';
 import { 
   userFixtures, 
   createUserInDb,
-  cleanupUsers
 } from '../fixtures/user.fixtures';
 
 // Fonction de nettoyage

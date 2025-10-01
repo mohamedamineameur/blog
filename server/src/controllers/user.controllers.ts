@@ -2,6 +2,7 @@ import { Request, Response } from 'express';
 import bcrypt from 'bcryptjs';
 import { User } from '../models/User';
 import { Op } from 'sequelize';
+import { AuthenticatedRequest } from '../middleware/auth';
 
 // Interfaces pour les requêtes
 export interface IReqCreateUser {
@@ -253,7 +254,7 @@ export const getUsers = async (req: Request<IReqUserParams, IResGetUsers, IReqPa
 export const getUserById = async (req: Request<IReqUserParams, IResGetUser>, res: Response<IResGetUser>): Promise<void> => {
   try {
     // Pour les routes /me, utiliser l'ID de l'utilisateur authentifié
-    const id = req.params.id || (req as any).user?.id;
+    const id = req.params.id || (req as unknown as AuthenticatedRequest).user?.id;
 
     if (!id) {
       res.status(400).json({
@@ -293,7 +294,7 @@ export const getUserById = async (req: Request<IReqUserParams, IResGetUser>, res
 export const updateUser = async (req: Request<IReqUserParams, IResUpdateUser, IReqUpdateUser>, res: Response<IResUpdateUser>): Promise<void> => {
   try {
     // Pour les routes /me, utiliser l'ID de l'utilisateur authentifié
-    const id = req.params.id || (req as any).user?.id;
+    const id = req.params.id || (req as unknown as AuthenticatedRequest).user?.id;
     const updateData = req.body;
 
     // Vérifier si l'utilisateur existe
@@ -390,7 +391,7 @@ export const deleteUser = async (req: Request<IReqUserParams, IResDeleteUser>, r
 export const verifyEmail = async (req: Request<IReqUserParams, IResVerifyEmail, IReqVerifyEmail>, res: Response<IResVerifyEmail>): Promise<void> => {
   try {
     // Pour les routes /me, utiliser l'ID de l'utilisateur authentifié
-    const id = req.params.id || (req as any).user?.id;
+    const id = req.params.id || (req as unknown as AuthenticatedRequest).user?.id;
     const { otp } = req.body;
 
     const user = await User.findByPk(id);
@@ -442,7 +443,7 @@ export const verifyEmail = async (req: Request<IReqUserParams, IResVerifyEmail, 
 export const changePassword = async (req: Request<IReqUserParams, IResChangePassword, IReqChangePassword>, res: Response<IResChangePassword>): Promise<void> => {
   try {
     // Pour les routes /me, utiliser l'ID de l'utilisateur authentifié
-    const id = req.params.id || (req as any).user?.id;
+    const id = req.params.id || (req as unknown as AuthenticatedRequest).user?.id;
     const { currentPassword, newPassword } = req.body;
 
     const user = await User.findByPk(id);
