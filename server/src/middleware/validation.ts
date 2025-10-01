@@ -7,6 +7,11 @@ interface ValidationError {
   message: string;
 }
 
+// Interface pour les requêtes avec query validées
+interface RequestWithValidatedQuery extends Request {
+  validatedQuery?: Record<string, unknown>;
+}
+
 // Middleware de validation générique
 export const validate = (schema: Joi.ObjectSchema, property: 'body' | 'query' | 'params' = 'body') => {
   return (req: Request, res: Response, next: NextFunction): void => {
@@ -37,7 +42,7 @@ export const validate = (schema: Joi.ObjectSchema, property: 'body' | 'query' | 
     } else if (property === 'query') {
       // Pour les query parameters, nous ne pouvons pas modifier req.query directement
       // Les contrôleurs devront utiliser les valeurs validées
-      (req as any).validatedQuery = value;
+      (req as RequestWithValidatedQuery).validatedQuery = value;
     } else if (property === 'params') {
       req.params = value;
     }
@@ -46,7 +51,7 @@ export const validate = (schema: Joi.ObjectSchema, property: 'body' | 'query' | 
 };
 
 // Middleware pour gérer les erreurs asynchrones
-export const asyncHandler = (fn: Function) => {
+export const asyncHandler = (fn: (req: Request, res: Response, next: NextFunction) => Promise<void>) => {
   return (req: Request, res: Response, next: NextFunction): void => {
     Promise.resolve(fn(req, res, next)).catch(next);
   };
@@ -57,13 +62,15 @@ export const errorHandler = (
   error: Error,
   req: Request,
   res: Response,
-  next: NextFunction
+  _next: NextFunction
 ): void => {
+  // eslint-disable-next-line no-console
   console.error('Erreur:', error);
 
   // Erreur de validation Sequelize
   if (error.name === 'SequelizeValidationError') {
-    const validationErrors: ValidationError[] = (error as any).errors.map((err: any) => ({
+    const sequelizeError = error as unknown as { errors: Array<{ path: string; message: string }> };
+    const validationErrors: ValidationError[] = sequelizeError.errors.map((err: { path: string; message: string }) => ({
       field: err.path,
       message: err.message
     }));

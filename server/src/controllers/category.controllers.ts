@@ -114,13 +114,15 @@ export const getCategories = async (req: Request<object, IResGetCategories, obje
     } = req.query;
 
     // Construire les conditions de recherche
-    const whereClause: any = {};
+    // Utilisation d'un typage plus précis pour éviter 'any'
+    const whereClause: Record<string | symbol, unknown> = {};
     if (search) {
       whereClause[Op.or] = [
         { name: { [Op.like]: `%${search}%` } },
         { description: { [Op.like]: `%${search}%` } }
       ];
     }
+    
 
     // Calculer l'offset pour la pagination
     const offset = (page - 1) * limit;

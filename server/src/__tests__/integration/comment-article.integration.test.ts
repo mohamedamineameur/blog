@@ -1,11 +1,11 @@
 import request from 'supertest';
 import app from '../../app';
-import { CommentArticle } from '../../models/CommentArticle';
+import { CommentArticle } from '../../models/comment-article';
 import { Article } from '../../models/Article';
 import { Category } from '../../models/Category';
 import { User } from '../../models/User';
 import { Session } from '../../models/Session';
-import { sequelize } from '../../db/sequelize';
+// import { sequelize } from '../../db/sequelize'; // Unused import
 import { initDatabase } from '../../db/sequelize';
 import { 
   generateTestToken,
@@ -233,7 +233,7 @@ describe('CommentArticle Integration Tests', () => {
       expect(listResponse.body.success).toBe(true);
       expect(listResponse.body.data.data).toHaveLength(2); // Parent et réponse sont listés
       // Trouver le commentaire parent dans la liste
-      const parentComment = listResponse.body.data.data.find((comment: any) => comment.parentId === null);
+      const parentComment = listResponse.body.data.data.find((comment: { parentId: string | null }) => comment.parentId === null);
       expect(parentComment).toBeDefined();
       expect(parentComment.Replies).toHaveLength(1);
     }, 30000);
@@ -290,7 +290,10 @@ describe('CommentArticle Integration Tests', () => {
           firstname: `Test${i}`,
           lastname: `User${i}`,
           email: `test${i}@example.com`,
-          password: 'password123'
+          password: 'password123',
+          isAdmin: false,
+          isEmailVerified: true,
+          isBanned: false
         });
         const testToken = generateTestToken(testUser.id);
         const testTokenHash = await hashTestToken(testToken);

@@ -1,4 +1,4 @@
-import { Router } from 'express';
+import { Router, Request, Response } from 'express';
 import {
   createUser,
   getUsers,
@@ -7,7 +7,22 @@ import {
   deleteUser,
   verifyEmail,
   changePassword,
-  toggleBanUser
+  toggleBanUser,
+  IReqCreateUser,
+  IReqUpdateUser,
+  IReqVerifyEmail,
+  IReqChangePassword,
+  IReqToggleBan,
+  IReqUserParams,
+  IReqPaginationParams,
+  IResCreateUser,
+  IResGetUsers,
+  IResGetUser,
+  IResUpdateUser,
+  IResDeleteUser,
+  IResVerifyEmail,
+  IResChangePassword,
+  IResToggleBan
 } from '../controllers/user.controllers';
 import {
   createUserSchema,
@@ -19,9 +34,46 @@ import {
 } from '../schemas/user.schemas';
 import { validate, asyncHandler } from '../middleware/validation';
 import { authenticate } from '../middleware/auth';
-import { userScope, adminScope, userOrAdminScope, forceUserScope, meScope } from '../middleware/scope';
+import { userScope, adminScope, userOrAdminScope } from '../middleware/scope';
 
 const router = Router();
+
+// Wrappers typés pour les contrôleurs
+const createUserWrapper = asyncHandler(async (req: Request, res: Response) => {
+  // createUser n'a pas besoin du paramètre id, on passe un objet vide
+  const reqWithEmptyParams = { ...req, params: {} } as unknown as Request<IReqUserParams, IResCreateUser, IReqCreateUser>;
+  await createUser(reqWithEmptyParams, res as Response<IResCreateUser>);
+});
+
+const getUsersWrapper = asyncHandler(async (req: Request, res: Response) => {
+  // getUsers n'a pas besoin du paramètre id, on passe un objet vide mais on garde query
+  const reqWithEmptyParams = { ...req, params: {}, query: req.query } as unknown as Request<IReqUserParams, IResGetUsers, IReqPaginationParams>;
+  await getUsers(reqWithEmptyParams, res as Response<IResGetUsers>);
+});
+
+const getUserByIdWrapper = asyncHandler(async (req: Request, res: Response) => {
+  await getUserById(req as unknown as Request<IReqUserParams, IResGetUser>, res as Response<IResGetUser>);
+});
+
+const updateUserWrapper = asyncHandler(async (req: Request, res: Response) => {
+  await updateUser(req as unknown as Request<IReqUserParams, IResUpdateUser, IReqUpdateUser>, res as Response<IResUpdateUser>);
+});
+
+const deleteUserWrapper = asyncHandler(async (req: Request, res: Response) => {
+  await deleteUser(req as unknown as Request<IReqUserParams, IResDeleteUser>, res as Response<IResDeleteUser>);
+});
+
+const verifyEmailWrapper = asyncHandler(async (req: Request, res: Response) => {
+  await verifyEmail(req as unknown as Request<IReqUserParams, IResVerifyEmail, IReqVerifyEmail>, res as Response<IResVerifyEmail>);
+});
+
+const changePasswordWrapper = asyncHandler(async (req: Request, res: Response) => {
+  await changePassword(req as unknown as Request<IReqUserParams, IResChangePassword, IReqChangePassword>, res as Response<IResChangePassword>);
+});
+
+const toggleBanUserWrapper = asyncHandler(async (req: Request, res: Response) => {
+  await toggleBanUser(req as unknown as Request<IReqUserParams, IResToggleBan, IReqToggleBan>, res as Response<IResToggleBan>);
+});
 
 // Routes pour les utilisateurs
 
@@ -29,7 +81,7 @@ const router = Router();
 router.post(
   '/',
   validate(createUserSchema, 'body'),
-  asyncHandler(createUser)
+  createUserWrapper
 );
 
 // Liste des utilisateurs (admin seulement)
@@ -38,7 +90,7 @@ router.get(
   authenticate,
   adminScope,
   validate(getUsersQuerySchema, 'query'),
-  asyncHandler(getUsers)
+  getUsersWrapper
 );
 
 // Routes pour l'utilisateur connecté (sans spécifier l'ID) - DOIT être avant /:id
@@ -47,7 +99,7 @@ router.get(
 router.get(
   '/me',
   authenticate,
-  asyncHandler(getUserById)
+  getUserByIdWrapper
 );
 
 // Mettre à jour ses propres données
@@ -55,7 +107,7 @@ router.put(
   '/me',
   authenticate,
   validate(updateUserSchema, 'body'),
-  asyncHandler(updateUser)
+  updateUserWrapper
 );
 
 // Vérifier son propre email
@@ -63,7 +115,7 @@ router.post(
   '/me/verify-email',
   authenticate,
   validate(verifyEmailSchema, 'body'),
-  asyncHandler(verifyEmail)
+  verifyEmailWrapper
 );
 
 // Changer son propre mot de passe
@@ -71,7 +123,7 @@ router.post(
   '/me/change-password',
   authenticate,
   validate(changePasswordSchema, 'body'),
-  asyncHandler(changePassword)
+  changePasswordWrapper
 );
 
 // Obtenir un utilisateur par ID (utilisateur ou admin)
@@ -80,7 +132,7 @@ router.get(
   authenticate,
   userOrAdminScope,
   validate(userIdParamSchema, 'params'),
-  asyncHandler(getUserById)
+  getUserByIdWrapper
 );
 
 // Mettre à jour un utilisateur (utilisateur ou admin)
@@ -90,7 +142,7 @@ router.put(
   userOrAdminScope,
   validate(userIdParamSchema, 'params'),
   validate(updateUserSchema, 'body'),
-  asyncHandler(updateUser)
+  updateUserWrapper
 );
 
 // Supprimer un utilisateur (admin seulement)
@@ -99,7 +151,7 @@ router.delete(
   authenticate,
   adminScope,
   validate(userIdParamSchema, 'params'),
-  asyncHandler(deleteUser)
+  deleteUserWrapper
 );
 
 // Routes spéciales
@@ -111,7 +163,7 @@ router.post(
   userScope,
   validate(userIdParamSchema, 'params'),
   validate(verifyEmailSchema, 'body'),
-  asyncHandler(verifyEmail)
+  verifyEmailWrapper
 );
 
 // Changement de mot de passe (utilisateur seulement)
@@ -121,7 +173,7 @@ router.post(
   userScope,
   validate(userIdParamSchema, 'params'),
   validate(changePasswordSchema, 'body'),
-  asyncHandler(changePassword)
+  changePasswordWrapper
 );
 
 // Bannir/débannir un utilisateur (admin seulement)
@@ -130,7 +182,7 @@ router.patch(
   authenticate,
   adminScope,
   validate(userIdParamSchema, 'params'),
-  asyncHandler(toggleBanUser)
+  toggleBanUserWrapper
 );
 
 export default router;

@@ -98,7 +98,7 @@ export interface IResDeleteArticle {
 }
 
 // Créer un article
-export const createArticle = async (req: AuthenticatedRequest<IReqArticleParams, IResCreateArticle, IReqCreateArticle>, res: Response<IResCreateArticle>): Promise<void> => {
+export const createArticle = async (req: AuthenticatedRequest, res: Response<IResCreateArticle>): Promise<void> => {
   try {
     const { categoryId, title, content, status = 'draft' } = req.body;
     const userId = req.user!.id;
@@ -170,10 +170,10 @@ export const getArticles = async (req: Request<object, IResGetArticles, object, 
     } = req.query;
 
     // Construire les conditions de recherche
-    const whereClause: any = {};
+    const whereClause: Record<string, unknown> = {};
     
     if (search) {
-      whereClause[Op.or] = [
+      whereClause[Op.or as unknown as string] = [
         { title: { [Op.like]: `%${search}%` } },
         { content: { [Op.like]: `%${search}%` } }
       ];
@@ -289,12 +289,15 @@ export const getArticleById = async (req: Request<IReqArticleParams, IResGetArti
 };
 
 // Mettre à jour un article
-export const updateArticle = async (req: AuthenticatedRequest<IReqArticleParams, IResUpdateArticle, IReqUpdateArticle>, res: Response<IResUpdateArticle>): Promise<void> => {
+export const updateArticle = async (
+  req: AuthenticatedRequest, 
+  res: Response<IResUpdateArticle>
+): Promise<void> => {
   try {
     const { id } = req.params;
     const updateData = req.body;
-    const userId = req.user!.id;
-    const isAdmin = req.user!.isAdmin;
+    const userId = req.user && req.user.id;
+    const isAdmin = req.user && req.user.isAdmin;
 
     // Vérifier si l'article existe
     const article = await Article.findByPk(id);
@@ -366,7 +369,10 @@ export const updateArticle = async (req: AuthenticatedRequest<IReqArticleParams,
 };
 
 // Supprimer un article
-export const deleteArticle = async (req: AuthenticatedRequest<IReqArticleParams, IResDeleteArticle>, res: Response<IResDeleteArticle>): Promise<void> => {
+export const deleteArticle = async (
+  req: AuthenticatedRequest, 
+  res: Response<IResDeleteArticle>
+): Promise<void> => {
   try {
     const { id } = req.params;
     const userId = req.user!.id;
@@ -409,7 +415,10 @@ export const deleteArticle = async (req: AuthenticatedRequest<IReqArticleParams,
 };
 
 // Changer le statut d'un article
-export const changeArticleStatus = async (req: AuthenticatedRequest<IReqArticleParams, IResUpdateArticle, IReqChangeStatus>, res: Response<IResUpdateArticle>): Promise<void> => {
+export const changeArticleStatus = async (
+  req: AuthenticatedRequest, 
+  res: Response<IResUpdateArticle>
+): Promise<void> => {
   try {
     const { id } = req.params;
     const { status } = req.body;

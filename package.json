@@ -17,7 +17,9 @@
   "scripts": {
     "test": "echo \"Error: no test specified\" && exit 1",
     "build": "babel . --out-dir dist --extensions \".ts,.tsx\" --ignore node_modules",
-    "lint": "npx eslint ."
+    "lint": "npx eslint .",
+    "type-check": "npx tsc --noEmit --project tsconfig.typecheck.json",
+    "check-all": "npm run lint && npm run type-check && cd server && npm test"
   },
   "author": "",
   "license": "ISC"

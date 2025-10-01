@@ -1,78 +1,82 @@
 import { Sequelize } from 'sequelize';
 
 export function setupAssociations(sequelize: Sequelize): void {
-  const { User } = sequelize.models;
-  const { Category } = sequelize.models;
-  const { Article } = sequelize.models;
-  const { LikeArticle } = sequelize.models;
-  const { CommentArticle } = sequelize.models;
+  const { User: userModel } = sequelize.models;
+  const { Category: categoryModel } = sequelize.models;
+  const { Article: articleModel } = sequelize.models;
+  const { LikeArticle: likeArticleModel } = sequelize.models;
+  const { CommentArticle: commentArticleModel } = sequelize.models;
+
+  if (!userModel || !articleModel || !categoryModel || !likeArticleModel || !commentArticleModel) {
+    throw new Error('Required models not found in sequelize.models');
+  }
 
   // Association User -> Article (One-to-Many)
-  User.hasMany(Article, {
+  userModel.hasMany(articleModel, {
     foreignKey: 'userId',
     as: 'Articles'
   });
-  Article.belongsTo(User, {
+  articleModel.belongsTo(userModel, {
     foreignKey: 'userId',
     as: 'User'
   });
 
   // Association Category -> Article (One-to-Many)
-  Category.hasMany(Article, {
+  categoryModel.hasMany(articleModel, {
     foreignKey: 'categoryId',
     as: 'Articles'
   });
-  Article.belongsTo(Category, {
+  articleModel.belongsTo(categoryModel, {
     foreignKey: 'categoryId',
     as: 'Category'
   });
 
   // Association User -> LikeArticle (One-to-Many)
-  User.hasMany(LikeArticle, {
+  userModel.hasMany(likeArticleModel, {
     foreignKey: 'userId',
     as: 'LikeArticles'
   });
-  LikeArticle.belongsTo(User, {
+  likeArticleModel.belongsTo(userModel, {
     foreignKey: 'userId',
     as: 'User'
   });
 
   // Association Article -> LikeArticle (One-to-Many)
-  Article.hasMany(LikeArticle, {
+  articleModel.hasMany(likeArticleModel, {
     foreignKey: 'articleId',
     as: 'LikeArticles'
   });
-  LikeArticle.belongsTo(Article, {
+  likeArticleModel.belongsTo(articleModel, {
     foreignKey: 'articleId',
     as: 'Article'
   });
 
   // Association User -> CommentArticle (One-to-Many)
-  User.hasMany(CommentArticle, {
+  userModel.hasMany(commentArticleModel, {
     foreignKey: 'userId',
     as: 'CommentArticles'
   });
-  CommentArticle.belongsTo(User, {
+  commentArticleModel.belongsTo(userModel, {
     foreignKey: 'userId',
     as: 'User'
   });
 
   // Association Article -> CommentArticle (One-to-Many)
-  Article.hasMany(CommentArticle, {
+  articleModel.hasMany(commentArticleModel, {
     foreignKey: 'articleId',
     as: 'CommentArticles'
   });
-  CommentArticle.belongsTo(Article, {
+  commentArticleModel.belongsTo(articleModel, {
     foreignKey: 'articleId',
     as: 'Article'
   });
 
   // Association CommentArticle -> CommentArticle (Self-referencing for replies)
-  CommentArticle.hasMany(CommentArticle, {
+  commentArticleModel.hasMany(commentArticleModel, {
     foreignKey: 'parentId',
     as: 'Replies'
   });
-  CommentArticle.belongsTo(CommentArticle, {
+  commentArticleModel.belongsTo(commentArticleModel, {
     foreignKey: 'parentId',
     as: 'Parent'
   });

@@ -11,7 +11,7 @@ export interface LikeArticleAttributes {
 }
 
 // Interface pour les attributs optionnels lors de la création
-export interface LikeArticleCreationAttributes extends Optional<LikeArticleAttributes, 'id' | 'createdAt' | 'updatedAt'> {}
+export type LikeArticleCreationAttributes = Optional<LikeArticleAttributes, 'id' | 'createdAt' | 'updatedAt'>
 
 // Classe du modèle LikeArticle
 export class LikeArticle extends Model<LikeArticleAttributes, LikeArticleCreationAttributes> implements LikeArticleAttributes {

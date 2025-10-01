@@ -4,7 +4,7 @@ import { Article } from '../../models/Article';
 import { Category } from '../../models/Category';
 import { User } from '../../models/User';
 import { Session } from '../../models/Session';
-import { sequelize } from '../../db/sequelize';
+// import { sequelize } from '../../db/sequelize'; // Unused import
 import { initDatabase } from '../../db/sequelize';
 import { 
   generateTestToken,
@@ -226,7 +226,7 @@ describe('Article Integration Tests', () => {
 
       expect(publishedResponse.body.success).toBe(true);
       expect(publishedResponse.body.data.data).toHaveLength(2);
-      expect(publishedResponse.body.data.data.every((article: any) => article.status === 'published')).toBe(true);
+      expect(publishedResponse.body.data.data.every((article: { status: string }) => article.status === 'published')).toBe(true);
 
       // Tester la recherche
       const searchResponse = await request(app)
@@ -235,7 +235,7 @@ describe('Article Integration Tests', () => {
 
       expect(searchResponse.body.success).toBe(true);
       expect(searchResponse.body.data.data).toHaveLength(2);
-      expect(searchResponse.body.data.data.every((article: any) => article.title.includes('Published'))).toBe(true);
+      expect(searchResponse.body.data.data.every((article: { title: string }) => article.title.includes('Published'))).toBe(true);
 
       // Tester le tri
       const sortedResponse = await request(app)
@@ -243,7 +243,7 @@ describe('Article Integration Tests', () => {
         .expect(200);
 
       expect(sortedResponse.body.success).toBe(true);
-      const titles = sortedResponse.body.data.data.map((article: any) => article.title);
+      const titles = sortedResponse.body.data.data.map((article: { title: string }) => article.title);
       expect(titles).toEqual(titles.sort());
     }, 30000);
 
@@ -316,7 +316,7 @@ describe('Article Integration Tests', () => {
       });
 
       // Créer des articles dans différentes catégories
-      const techArticle = await request(app)
+      await request(app)
         .post('/api/articles')
         .set('Cookie', [
           `sessionId=${userSession.id}`,
@@ -330,7 +330,7 @@ describe('Article Integration Tests', () => {
         })
         .expect(201);
 
-      const scienceArticle = await request(app)
+      await request(app)
         .post('/api/articles')
         .set('Cookie', [
           `sessionId=${userSession.id}`,

@@ -5,7 +5,7 @@ import { initSessionModel } from '../models/Session';
 import { initCategoryModel } from '../models/Category';
 import { initArticleModel } from '../models/Article';
 import { initLikeArticleModel } from '../models/LikeArticle';
-import { initCommentArticleModel } from '../models/CommentArticle';
+import { initCommentArticleModel } from '../models/comment-article';
 import { setupAssociations } from '../models/associations';
 
 // Configuration pour les tests (mémoire) vs production (fichier)

@@ -1,8 +1,7 @@
 import { Request, Response } from 'express';
-import { CommentArticle } from '../models/CommentArticle';
+import { CommentArticle } from '../models/comment-article';
 import { Article } from '../models/Article';
 import { User } from '../models/User';
-import { Op } from 'sequelize';
 import { AuthenticatedRequest } from '../middleware/auth';
 
 // Interfaces pour les requêtes
@@ -111,7 +110,10 @@ export interface IResApproveCommentArticle {
 }
 
 // Créer un commentaire
-export const createCommentArticle = async (req: AuthenticatedRequest<IReqCommentArticleParams, IResCreateCommentArticle, IReqCreateCommentArticle>, res: Response<IResCreateCommentArticle>): Promise<void> => {
+export const createCommentArticle = async (
+  req: AuthenticatedRequest, 
+  res: Response<IResCreateCommentArticle>
+): Promise<void> => {
   try {
     const { articleId, content, parentId } = req.body;
     const userId = req.user!.id;
@@ -218,7 +220,7 @@ export const getCommentArticles = async (req: Request<object, IResGetCommentArti
     } = req.query;
 
     // Construire les conditions de recherche
-    const whereClause: any = {};
+    const whereClause: Record<string, unknown> = {};
     
     if (articleId) {
       whereClause.articleId = articleId;
@@ -233,14 +235,31 @@ export const getCommentArticles = async (req: Request<object, IResGetCommentArti
     }
     
     if (isApproved !== undefined) {
-      whereClause.isApproved = isApproved === 'true' || isApproved === true;
+      whereClause.isApproved = String(isApproved) === 'true';
     }
 
     // Calculer l'offset pour la pagination
     const offset = (page - 1) * limit;
 
     // Configuration des includes
-    const includeConfig: any[] = [
+    const includeConfig: Array<{
+      model: typeof User | typeof Article | typeof CommentArticle,
+      as: string,
+      attributes: string[],
+      include?: Array<{
+        model: typeof User | typeof Article | typeof CommentArticle,
+        as: string,
+        attributes: string[],
+        include?: Array<{
+          model: typeof User | typeof Article | typeof CommentArticle,
+          as: string,
+          attributes: string[],
+          order?: [string, string][]
+        }>,
+        order?: [string, string][]
+      }>,
+      order?: [string, string][]
+    }> = [
       {
         model: User,
         as: 'User',
@@ -379,7 +398,10 @@ export const getCommentArticleById = async (req: Request<IReqCommentArticleParam
 };
 
 // Mettre à jour un commentaire
-export const updateCommentArticle = async (req: AuthenticatedRequest<IReqCommentArticleParams, IResUpdateCommentArticle, IReqUpdateCommentArticle>, res: Response<IResUpdateCommentArticle>): Promise<void> => {
+export const updateCommentArticle = async (
+  req: AuthenticatedRequest, 
+  res: Response<IResUpdateCommentArticle>
+): Promise<void> => {
   try {
     const { id } = req.params;
     const { content } = req.body;
@@ -468,11 +490,14 @@ export const updateCommentArticle = async (req: AuthenticatedRequest<IReqComment
 };
 
 // Supprimer un commentaire
-export const deleteCommentArticle = async (req: AuthenticatedRequest<IReqCommentArticleParams, IResDeleteCommentArticle>, res: Response<IResDeleteCommentArticle>): Promise<void> => {
+export const deleteCommentArticle = async (
+  req: AuthenticatedRequest, 
+  res: Response
+): Promise<void> => {
   try {
     const { id } = req.params;
-    const userId = req.user!.id;
-    const isAdmin = req.user!.isAdmin;
+    const userId = req.user && req.user.id;
+    const isAdmin = req.user && req.user.isAdmin;
 
     // Vérifier si le commentaire existe
     const comment = await CommentArticle.findByPk(id);
@@ -511,11 +536,14 @@ export const deleteCommentArticle = async (req: AuthenticatedRequest<IReqComment
 };
 
 // Approuver/Désapprouver un commentaire (admin seulement)
-export const approveCommentArticle = async (req: AuthenticatedRequest<IReqCommentArticleParams, IResApproveCommentArticle, IReqApproveCommentArticle>, res: Response<IResApproveCommentArticle>): Promise<void> => {
+export const approveCommentArticle = async (
+  req: AuthenticatedRequest, 
+  res: Response
+): Promise<void> => {
   try {
     const { id } = req.params;
     const { isApproved } = req.body;
-    const isAdmin = req.user!.isAdmin;
+    const isAdmin = req.user && req.user.isAdmin;
 
     // Vérifier que l'utilisateur est admin
     if (!isAdmin) {

@@ -3,7 +3,7 @@ import app from '../../app';
 import { Category } from '../../models/Category';
 import { User } from '../../models/User';
 import { Session } from '../../models/Session';
-import { sequelize } from '../../db/sequelize';
+// import { sequelize } from '../../db/sequelize'; // Unused import
 import { initDatabase } from '../../db/sequelize';
 import { 
   generateTestToken,
