@@ -9,6 +9,7 @@ import authRoutes from './routes/auth.routes';
 import categoryRoutes from './routes/category.routes';
 import articleRoutes from './routes/article.routes';
 import likeArticleRoutes from './routes/likeArticle.routes';
+import commentArticleRoutes from './routes/commentArticle.routes';
 import { errorHandler } from './middleware/validation';
 
 const app = express();
@@ -38,6 +39,7 @@ app.use('/api/users', userRoutes);
 app.use('/api/categories', categoryRoutes);
 app.use('/api/articles', articleRoutes);
 app.use('/api/like-articles', likeArticleRoutes);
+app.use('/api/comment-articles', commentArticleRoutes);
 
 // Middleware de gestion d'erreurs (doit être en dernier)
 app.use(errorHandler);

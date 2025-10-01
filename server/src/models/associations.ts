@@ -5,6 +5,7 @@ export function setupAssociations(sequelize: Sequelize): void {
   const { Category } = sequelize.models;
   const { Article } = sequelize.models;
   const { LikeArticle } = sequelize.models;
+  const { CommentArticle } = sequelize.models;
 
   // Association User -> Article (One-to-Many)
   User.hasMany(Article, {
@@ -44,5 +45,35 @@ export function setupAssociations(sequelize: Sequelize): void {
   LikeArticle.belongsTo(Article, {
     foreignKey: 'articleId',
     as: 'Article'
+  });
+
+  // Association User -> CommentArticle (One-to-Many)
+  User.hasMany(CommentArticle, {
+    foreignKey: 'userId',
+    as: 'CommentArticles'
+  });
+  CommentArticle.belongsTo(User, {
+    foreignKey: 'userId',
+    as: 'User'
+  });
+
+  // Association Article -> CommentArticle (One-to-Many)
+  Article.hasMany(CommentArticle, {
+    foreignKey: 'articleId',
+    as: 'CommentArticles'
+  });
+  CommentArticle.belongsTo(Article, {
+    foreignKey: 'articleId',
+    as: 'Article'
+  });
+
+  // Association CommentArticle -> CommentArticle (Self-referencing for replies)
+  CommentArticle.hasMany(CommentArticle, {
+    foreignKey: 'parentId',
+    as: 'Replies'
+  });
+  CommentArticle.belongsTo(CommentArticle, {
+    foreignKey: 'parentId',
+    as: 'Parent'
   });
 }
